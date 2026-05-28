@@ -13,6 +13,11 @@
 namespace ParameterIDs
 {
     static constexpr auto mix = "mix";
+    static constexpr auto size = "size";
+    static constexpr auto shape = "shape";
+    static constexpr auto damping = "damping";
+    static constexpr auto wetness = "wetness";
+
 }
 
 class SomeReverbAudioProcessor : public juce::AudioProcessor
@@ -54,5 +59,6 @@ public:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
 private:
+    juce::Reverb reverb;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SomeReverbAudioProcessor)
 };

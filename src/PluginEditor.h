@@ -23,6 +23,30 @@ public:
 private:
     SomeReverbAudioProcessor& audioProcessor;
 
+    juce::Slider sizeSlider;
+    juce::Label sizeLabel;
+
+    juce::AudioProcessorValueTreeState::SliderAttachment sizeAttachment;
+
+
+    juce::Slider shapeSlider;
+    juce::Label shapeLabel;
+
+    juce::AudioProcessorValueTreeState::SliderAttachment shapeAttachment;
+
+
+    juce::Slider dampingSlider;
+    juce::Label dampingLabel;
+
+    juce::AudioProcessorValueTreeState::SliderAttachment dampingAttachment;
+
+
+    juce::Slider wetnessSlider;
+    juce::Label wetnessLabel;
+
+    juce::AudioProcessorValueTreeState::SliderAttachment wetnessAttachment;
+
+
     juce::Slider mixSlider;
     juce::Label mixLabel;
 

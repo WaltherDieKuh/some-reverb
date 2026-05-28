@@ -90,7 +90,7 @@ void SomeReverbAudioProcessor::changeProgramName(int, const juce::String&)
 
 void SomeReverbAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    juce::ignoreUnused(sampleRate, samplesPerBlock);
+    reverb.setSampleRate(sampleRate);
 }
 
 void SomeReverbAudioProcessor::releaseResources()
@@ -126,6 +126,46 @@ void SomeReverbAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
+
+    auto sizeValue = apvts.getRawParameterValue(ParameterIDs::size)->load();
+    auto shapeValue = apvts.getRawParameterValue(ParameterIDs::shape)->load();
+    auto dampingValue = apvts.getRawParameterValue(ParameterIDs::damping)->load();
+    auto wetnessValue = apvts.getRawParameterValue(ParameterIDs::wetness)->load();
+    auto mixValue = apvts.getRawParameterValue(ParameterIDs::mix)->load();
+
+    // ===== DRY SIGNAL SPEICHERN =====
+    juce::AudioBuffer<float> dryBuffer(buffer.getNumChannels(), buffer.getNumSamples());
+    for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+        dryBuffer.copyFrom(channel, 0, buffer, channel, 0, buffer.getNumSamples());
+
+    // ===== REVERB-PARAMETER SETZEN =====
+    juce::Reverb::Parameters reverbParams;
+    reverbParams.roomSize = sizeValue;
+    reverbParams.damping = dampingValue;
+    reverbParams.wetLevel = wetnessValue;
+    reverbParams.dryLevel = 0.0f;                // 0.0: Wir mixen selbst
+    reverbParams.width = 1.0f;
+    reverb.setParameters(reverbParams);
+
+    // ===== WET SIGNAL MIT JUCE::REVERB GENERIEREN =====
+    juce::AudioBuffer<float> wetBuffer = buffer;
+    reverb.processStereo(wetBuffer.getWritePointer(0), wetBuffer.getWritePointer(1), 
+                         buffer.getNumSamples());
+
+    // ===== MIX: DRY + WET KOMBINIEREN =====
+    for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+    {
+        auto* dryData = dryBuffer.getReadPointer(channel);
+        auto* wetData = wetBuffer.getReadPointer(channel);
+        auto* outputData = buffer.getWritePointer(channel);
+        
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            // Mix-Formel: (dry * (1 - mix)) + (wet * mix)
+            outputData[sample] = (dryData[sample] * (1.0f - mixValue)) + 
+                                 (wetData[sample] * mixValue);
+        }
+    }
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
@@ -165,6 +205,30 @@ SomeReverbAudioProcessor::createParameterLayout()
         "Mix",
         range,
         0.5f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        ParameterIDs::size,
+        "Size",
+        range,
+        1.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        ParameterIDs::shape,
+        "Shape",
+        range,
+        4.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        ParameterIDs::damping,
+        "Damping",
+        range,
+        0.0f));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        ParameterIDs::wetness,
+        "Wetness",
+        range,
+        1.0f));
     return layout;
 }
 
