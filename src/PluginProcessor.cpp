@@ -9,7 +9,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-SimpleGainAudioProcessor::SimpleGainAudioProcessor()
+SomeReverbAudioProcessor::SomeReverbAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
     : AudioProcessor(BusesProperties()
 #if !JucePlugin_IsMidiEffect
@@ -24,18 +24,16 @@ SimpleGainAudioProcessor::SimpleGainAudioProcessor()
 #endif
     , apvts(*this, nullptr, "PARAMETERS", createParameterLayout())
 {
-    gainParam = apvts.getRawParameterValue(ParameterIDs::gain);
-    jassert(gainParam != nullptr);
 }
 
-SimpleGainAudioProcessor::~SimpleGainAudioProcessor() = default;
+SomeReverbAudioProcessor::~SomeReverbAudioProcessor() = default;
 
-const juce::String SimpleGainAudioProcessor::getName() const
+const juce::String SomeReverbAudioProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool SimpleGainAudioProcessor::acceptsMidi() const
+bool SomeReverbAudioProcessor::acceptsMidi() const
 {
 #if JucePlugin_WantsMidiInput
     return true;
@@ -44,7 +42,7 @@ bool SimpleGainAudioProcessor::acceptsMidi() const
 #endif
 }
 
-bool SimpleGainAudioProcessor::producesMidi() const
+bool SomeReverbAudioProcessor::producesMidi() const
 {
 #if JucePlugin_ProducesMidiOutput
     return true;
@@ -53,7 +51,7 @@ bool SimpleGainAudioProcessor::producesMidi() const
 #endif
 }
 
-bool SimpleGainAudioProcessor::isMidiEffect() const
+bool SomeReverbAudioProcessor::isMidiEffect() const
 {
 #if JucePlugin_IsMidiEffect
     return true;
@@ -62,48 +60,45 @@ bool SimpleGainAudioProcessor::isMidiEffect() const
 #endif
 }
 
-double SimpleGainAudioProcessor::getTailLengthSeconds() const
+double SomeReverbAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int SimpleGainAudioProcessor::getNumPrograms()
+int SomeReverbAudioProcessor::getNumPrograms()
 {
     return 1;
 }
 
-int SimpleGainAudioProcessor::getCurrentProgram()
+int SomeReverbAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void SimpleGainAudioProcessor::setCurrentProgram(int)
+void SomeReverbAudioProcessor::setCurrentProgram(int)
 {
 }
 
-const juce::String SimpleGainAudioProcessor::getProgramName(int)
+const juce::String SomeReverbAudioProcessor::getProgramName(int)
 {
     return {};
 }
 
-void SimpleGainAudioProcessor::changeProgramName(int, const juce::String&)
+void SomeReverbAudioProcessor::changeProgramName(int, const juce::String&)
 {
 }
 
-void SimpleGainAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void SomeReverbAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    juce::ignoreUnused(samplesPerBlock);
-    gainSmoothed.reset(sampleRate, 0.05);
-    gainSmoothed.setCurrentAndTargetValue(
-        juce::Decibels::decibelsToGain(gainParam->load()));
+    juce::ignoreUnused(sampleRate, samplesPerBlock);
 }
 
-void SimpleGainAudioProcessor::releaseResources()
+void SomeReverbAudioProcessor::releaseResources()
 {
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool SimpleGainAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
+bool SomeReverbAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
 #if JucePlugin_IsMidiEffect
     juce::ignoreUnused(layouts);
@@ -123,7 +118,7 @@ bool SimpleGainAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts
 }
 #endif
 
-void SimpleGainAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
+void SomeReverbAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                             juce::MidiBuffer& midiMessages)
 {
     juce::ignoreUnused(midiMessages);
@@ -134,38 +129,26 @@ void SimpleGainAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
-
-    gainSmoothed.setTargetValue(juce::Decibels::decibelsToGain(gainParam->load()));
-
-    const auto numSamples = buffer.getNumSamples();
-    const auto numChannels = buffer.getNumChannels();
-
-    for (int sample = 0; sample < numSamples; ++sample)
-    {
-        const auto gain = gainSmoothed.getNextValue();
-        for (int channel = 0; channel < numChannels; ++channel)
-            buffer.getWritePointer(channel)[sample] *= gain;
-    }
 }
 
-bool SimpleGainAudioProcessor::hasEditor() const
+bool SomeReverbAudioProcessor::hasEditor() const
 {
     return true;
 }
 
-juce::AudioProcessorEditor* SimpleGainAudioProcessor::createEditor()
+juce::AudioProcessorEditor* SomeReverbAudioProcessor::createEditor()
 {
-    return new SimpleGainAudioProcessorEditor(*this);
+    return new SomeReverbAudioProcessorEditor(*this);
 }
 
-void SimpleGainAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
+void SomeReverbAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     auto state = apvts.copyState();
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
 }
 
-void SimpleGainAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
+void SomeReverbAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
     if (xmlState != nullptr && xmlState->hasTagName(apvts.state.getType()))
@@ -173,20 +156,19 @@ void SimpleGainAudioProcessor::setStateInformation(const void* data, int sizeInB
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout
-SimpleGainAudioProcessor::createParameterLayout()
+SomeReverbAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    juce::NormalisableRange<float> range(-60.0f, 12.0f, 0.01f);
+    juce::NormalisableRange<float> range(0.0f, 1.0f, 0.001f);
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        ParameterIDs::gain,
-        "Gain",
+        ParameterIDs::mix,
+        "Mix",
         range,
-        0.0f,
-        "dB"));
+        0.5f));
     return layout;
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new SimpleGainAudioProcessor();
+    return new SomeReverbAudioProcessor();
 }

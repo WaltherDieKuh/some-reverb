@@ -12,14 +12,14 @@
 
 namespace ParameterIDs
 {
-    static constexpr auto gain = "gain";
+    static constexpr auto mix = "mix";
 }
 
-class SimpleGainAudioProcessor : public juce::AudioProcessor
+class SomeReverbAudioProcessor : public juce::AudioProcessor
 {
 public:
-    SimpleGainAudioProcessor();
-    ~SimpleGainAudioProcessor() override;
+    SomeReverbAudioProcessor();
+    ~SomeReverbAudioProcessor() override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -54,8 +54,5 @@ public:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
 private:
-    juce::LinearSmoothedValue<float> gainSmoothed;
-    std::atomic<float>* gainParam = nullptr;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SimpleGainAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SomeReverbAudioProcessor)
 };
